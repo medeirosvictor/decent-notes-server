@@ -8,7 +8,7 @@ require (
 	modernc.org/sqlite v1.34.4
 )
 
-replace github.com/medeirosvictor/decent-notes/shared/types => ../shared/types
+replace github.com/medeirosvictor/decent-notes/shared/types => ./types
 
 require (
 	github.com/dustin/go-humanize v1.0.1 // indirect
