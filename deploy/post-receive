@@ -1,0 +1,35 @@
+#!/bin/bash
+# post-receive hook for decent-notes bare repo
+# Automatically deploys on push to master
+#
+# Deploy runs in the background so `git push` returns immediately.
+# Check /opt/decent-notes/deploy.log for build output.
+#
+# Install: copy this file to <bare-repo>/hooks/post-receive
+#          chmod +x <bare-repo>/hooks/post-receive
+
+DEPLOY_DIR="/opt/decent-notes"
+LOG_FILE="$DEPLOY_DIR/deploy.log"
+BRANCH="master"
+
+while read oldrev newrev refname; do
+    if [ "$refname" = "refs/heads/$BRANCH" ]; then
+        echo "Deploy triggered for decent-notes ($BRANCH)."
+        echo "Building in background — check $LOG_FILE on the server."
+
+        mkdir -p "$DEPLOY_DIR"
+
+        # Checkout latest code to deploy directory
+        GIT_WORK_TREE="$DEPLOY_DIR" git checkout -f "$BRANCH"
+
+        # Run deploy in the background, detached from the push process
+        nohup bash -c "
+            cd '$DEPLOY_DIR'
+            echo '──────────────────────────────────────────' >> '$LOG_FILE'
+            echo \"Deploy started at \$(date)\" >> '$LOG_FILE'
+            echo '──────────────────────────────────────────' >> '$LOG_FILE'
+            bash deploy/deploy.sh >> '$LOG_FILE' 2>&1
+            echo \"Deploy finished at \$(date)\" >> '$LOG_FILE'
+        " > /dev/null 2>&1 &
+    fi
+done
